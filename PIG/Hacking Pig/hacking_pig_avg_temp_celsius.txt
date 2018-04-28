@@ -1,0 +1,16 @@
+hadoop fs -mkdir /user
+hadoop fs -mkdir /user/hadoop
+hadoop fs -mkdir /user/hadoop/dados
+hadoop fs -mkdir /user/hadoop/dados/temperatura
+
+hadoop fs -put 1901 /user/hadoop/dados/temperatura/1901.txt
+hadoop fs -put 1902 /user/hadoop/dados/temperatura/1902.txt
+
+pig
+
+grunt> lines = LOAD '/user/hadoop/dados/temperatura' as (line:chararray);
+grunt> measures = FOREACH lines GENERATE SUBSTRING(line,15,19) AS year, (float)SUBSTRING(line,87,92) as temp;
+grunt> measuresbyyear = GROUP measures BY year;
+grunt> avgmeasuresbyyear = FOREACH measuresbyyear GENERATE group AS year,AVG(measures.temp) AS temp;
+grunt> celsiusbyyear = FOREACH avgmeasuresbyyear GENERATE year, (temp) -32 as celsiusavg;
+grunt> STORE celsiusbyyear INTO '/user/hadoop/output/temperatura';
